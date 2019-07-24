@@ -1,0 +1,423 @@
+BFS 탐색을 통해
+두 갈래로 나뉘는 길 후보 군을 모두 candidRow와 candidCol에
+넣는 데까지는 성공했습니다. 이걸 시작점으로 각각 해서
+그냥 이전의 DFS로 각각 recursive로 돌리려 했으나 실패했습니다. 
+여전히 hasVisited 문제를 결국 풀지 못했습니다. 
+최대한 list 없이 queue로 BFS로 만들려 했으나 실패했습니다.
+과제와 무관하게 다시 해보겠습니다.
+
+
+
+import	java.util.*;
+public class Maze1 {
+
+	private	static final int NN = 10;
+	private static Stack stack = new Stack( );
+	static Queue<Integer> candidRow = new LinkedList<>();
+	static Queue<Integer> candidCol = new LinkedList<>();
+	/*using queues for BFS backtracking*/
+	static Queue<Integer> queueRow = new LinkedList<>(); /****/
+	static Queue<Integer> queueCol = new LinkedList<>(); /****/
+	private static int exitRow = (NN - 1), exitCol = (NN - 1);
+	private static boolean[ ][ ] hasVisited = new boolean[ NN ][ NN ];
+	// boolean array is initialized to false by default
+	
+	public static void stackPush( int row, int col ) {
+		int[ ] cod = { row, col };
+		stack.push( cod );
+//		System.out.println( "stackPush: [ " + stack.size( ) + " ] : [ " + cod[ 0 ] + " ][ " + cod[ 1 ] + " ]" );
+		return;
+	}
+	
+	
+	public static int[ ] stackPop( ) {
+		
+		int[ ] cod = ( int[ ] )stack.pop( );
+//		System.out.println( "stackPop: [ " + stack.size( ) + " ] : [ " + cod[ 0 ] + " ][ " + cod[ 1 ] + " ]" );
+		return cod;	
+	}
+	
+	public static void checkFourDirections( int maze[ ][ ], int row, int col ) {
+		//System.out.println("check"+row+""+col);
+		int crow = row;
+		int ccol = col;
+		int dir = 0;
+		
+		//System.out.println(row+ ""+ col);
+		stackPush( row, col );
+		// find an exit: success
+		if( row == exitRow && col == exitCol ) {
+			printSolution( );
+			return;
+		}
+
+		hasVisited[ row ][ col ] = true;
+		while( dir >= 0 ) {
+
+			boolean keep = false;
+//			System.out.println( " Current row [ " + row + " ] col [ " + col + " ] dir [ " + dir + " ]");
+			if( dir == 0 ) {			// north -- up
+				if( ( row - 1 >= 0 ) && ( maze[ row - 1 ][ col ] == 1 ) && ( !hasVisited[ row - 1 ][ col ] ) ) {
+		//		System.out.println( " up " );
+					crow = row - 1;
+					ccol=col;
+					keep = true;
+				}
+			} else if( dir == 3 ) {		// west -- left
+				if( ( col - 1 >= 0 ) && ( maze[ row ][ col - 1 ] == 1 ) && ( !hasVisited[ row ][ col - 1 ] ) ) {
+		//		System.out.println( " left " );
+					ccol = col - 1;
+					crow=row;
+					keep = true;
+				}
+			} else if( dir == 1 ) {		// east -- right
+				if( ( col + 1 < NN ) && ( maze[ row ][ col + 1 ] == 1 ) && ( !hasVisited[ row ][ col + 1 ] ) ) {
+		//		System.out.println( " right " );
+					ccol = col + 1;
+					crow=row;
+					keep = true;
+				}
+			} else if( dir == 2 ) {		// south -- down
+				if( ( row + 1 < NN ) && ( maze[ row + 1 ][ col ] == 1 ) && ( !hasVisited[ row + 1 ][ col ] ) ) {
+		//		System.out.println( " down " );
+					crow = row + 1;
+					ccol=col;
+					keep = true;
+				}
+			} else {					// dir == 4?
+		//		System.out.println( " NONE " + row + " | " + col );
+				stackPop( );
+				// break;
+				return;
+			}
+			++dir;
+			if (keep) 
+				checkFourDirections( maze, crow, ccol );
+		}
+		return;
+	}
+
+
+	public static void checkCandidates( int maze[ ][ ], int row, int col ) {
+        /*dequeue the head*/
+        row=queueRow.remove();	/****/	
+		col=queueCol.remove();	/****/
+		int crow = row;
+		int ccol = col;
+		int dir = 0;
+		int pathInNode=0; /****/
+
+		if( row == exitRow && col == exitCol ) {
+			//make all board nodes not visited and start from another candidate node
+			
+			int q = candidRow.size();
+			for (int k=0; k<q; k++){
+				row=candidRow.remove();
+				col=candidCol.remove();
+					for (int i=0;i<NN;i++){	
+						for(int j=0; j<NN; j++){
+							hasVisited[i][j]=false;
+						}
+					}
+					for (int m=0; m<row; m++){
+						for (int n=0; n<col; n++){
+							hasVisited[m][n]=true;
+						}
+					}
+				checkFourDirections(maze, row, col);
+			}
+			
+			System.exit(0);
+	        return;
+		}
+		hasVisited[ row ][ col ] = true;
+		boolean keep = false;
+		while( dir >= 0 ) {
+			
+//			System.out.println( " Current row [ " + row + " ] col [ " + col + " ] dir [ " + dir + " ]");
+			if( dir == 0 ) {			// north -- up
+				if( ( row - 1 >= 0 ) && ( maze[ row - 1 ][ col ] == 1 ) && ( !hasVisited[ row - 1 ][ col ] ) ) {
+				//System.out.println( " up " );
+					crow = row - 1;
+                    ccol=col;
+                    /*add candidates to queue*/
+					queueRow.offer(crow);	/****/	
+					queueCol.offer(ccol);	/****/
+					keep=true;
+					pathInNode++;
+				}
+			} else if( dir == 3 ) {		// west -- left
+				if( ( col - 1 >= 0 ) && ( maze[ row ][ col - 1 ] == 1 ) && ( !hasVisited[ row ][ col - 1 ] ) ) {
+			//	System.out.println( " left " );
+					ccol = col - 1;
+					crow=row;
+					queueRow.offer(crow);	/****/	
+					queueCol.offer(ccol);	/****/
+					keep=true;
+					pathInNode++;
+				}
+			} else if( dir == 1 ) {		// east -- right
+				if( ( col + 1 < NN ) && ( maze[ row ][ col + 1 ] == 1 ) && ( !hasVisited[ row ][ col + 1 ] ) ) {
+			//	System.out.println( " right " );
+					ccol = col + 1;
+					crow=row;
+					queueRow.offer(crow);	/****/	
+					queueCol.offer(ccol);	/****/
+					keep=true;
+					pathInNode++;
+				}
+			} else if( dir == 2 ) {		// south -- down
+				if( ( row + 1 < NN ) && ( maze[ row + 1 ][ col ] == 1 ) && ( !hasVisited[ row + 1 ][ col ] ) ) {
+			//	System.out.println( " down " );
+					crow = row + 1;
+					ccol=col;
+					queueRow.offer(crow);	/****/	
+					queueCol.offer(ccol);	/****/
+					keep=true;
+					pathInNode++;
+				}
+            } else {					// dir == 4?
+                /*return by trying the other candidate*/
+			//	System.out.println( " NONE " + row + " | " + col );
+				crow=queueRow.peek();/****/
+				ccol=queueCol.peek();/****/
+				keep=false;/****/
+				checkCandidates( maze, crow, ccol );/****/
+			}
+            ++dir;
+			/*BFS needs to check all directions*/
+			if ((pathInNode>1)&&(dir==4)){
+
+				for(int i=0;i<queueRow.size();i++){
+			//		System.out.println(queueRow.size()+"--------"+pathInNode);
+					if (i>=(queueRow.size()-pathInNode)){
+			//			System.out.println("push");
+						candidRow.offer(queueRow.peek());
+						candidCol.offer(queueCol.peek());
+					}
+			//		System.out.println(queueRow.peek() + " +++++ "+queueCol.peek());
+					queueRow.offer(queueRow.remove());
+					queueCol.offer(queueCol.remove());
+				}
+			}
+			//System.out.println(dir+" check "+crow + " "+ccol); 
+			if ((keep)&&(dir==4)){ /****/
+				crow=queueRow.peek();/****/
+				ccol=queueCol.peek();/****/
+				keep=false;/****/
+				checkCandidates( maze, crow, ccol );/****/
+			}
+		}
+		return;
+	}
+
+	public static void main(String[] args) {
+
+        final int maze[ ][ ] = { 
+        //	 0  1  2  3  4  5  6  7  8  9
+        	{1, 0, 0, 0, 1, 0, 0, 0, 0, 1}, // 0
+            {1, 1, 1, 0, 1, 1, 1, 1, 0, 0}, // 1
+            {0, 1, 0, 1, 1, 0, 0, 1, 0, 1}, // 2
+            {1, 1, 1, 1, 0, 1, 0, 1, 0, 0}, // 3
+            {0, 0, 1, 0, 1, 0, 1, 1, 1, 1}, // 4
+            {0, 1, 1, 0, 1, 1, 0, 0, 1, 0}, // 5
+            {0, 1, 0, 1, 0, 0, 1, 1, 1, 0}, // 6
+            {1, 1, 1, 0, 1, 0, 1, 1, 0, 0}, // 7
+            {0, 0, 1, 0, 0, 1, 1, 1, 0, 1}, // 8
+            {0, 0, 1, 1, 1, 1, 0, 1, 1, 1}, // 9
+        }; 
+        /*initiate queues with the start point*/
+		queueRow.offer(0); /****/
+		queueCol.offer(0); /****/
+		checkCandidates( maze, 0, 0 );
+			
+        System.out.println( "No paths have been found" );
+		return;
+	}
+			
+	public static void printSolution(  ) {
+
+		System.out.println( "\n\n ----------" );
+		System.out.println( " success " );
+        System.out.println( "----------\n\n" );
+        for( int idx = 0; idx < stack.size( ); idx++ ) {
+			int cod[ ] = ( int[ ] )stack.get( idx );
+			stack.pop();
+			System.out.println( "[ " + cod[ 0 ] + " ][ " + cod[ 1 ] + " ] ==> " );
+        }
+
+		}
+    
+}
+
+/**
+
+//attempt to print all solutions but failed
+//tried to store candidates nodes that have more
+//than one path and recursively call with queues
+
+import	java.util.*;
+public class Maze3 {
+
+	private	static final int NN = 10;
+	private static Stack stack = new Stack( );
+	//a queue for BFS backtracking and another for candidates that have more than one path
+	static Queue<Integer> queueRow = new LinkedList<>(); ////
+	static Queue<Integer> queueCol = new LinkedList<>(); ////
+	static Queue<Integer> candidRow = new LinkedList<>(); ////
+	static Queue<Integer> candidCol = new LinkedList<>(); ////
+	private static int exitRow = (NN - 1), exitCol = (NN - 1);
+	private static boolean[ ][ ] hasVisited = new boolean[ NN ][ NN ];
+	// boolean array is initialized to false by default
+	
+	public static void stackPush( int row, int col ) {
+		int[ ] cod = { row, col };
+		stack.push( cod );
+//		System.out.println( "stackPush: [ " + stack.size( ) + " ] : [ " + cod[ 0 ] + " ][ " + cod[ 1 ] + " ]" );
+		return;
+	}
+	
+	
+	public static int[ ] stackPop( ) {
+		
+		int[ ] cod = ( int[ ] )stack.pop( );
+//		System.out.println( "stackPop: [ " + stack.size( ) + " ] : [ " + cod[ 0 ] + " ][ " + cod[ 1 ] + " ]" );
+		return cod;	
+	}
+	
+	public static void checkFourDirections( int maze[ ][ ], int row, int col ) {
+		System.out.println(row +" check  " +col);
+		//initiate path counter and dequeue head of queue
+		int pathInNode=0;	////
+		row=queueRow.remove();		////	
+		col=queueCol.remove();	////
+		int crow = row;
+		int ccol = col;
+		int dir = 0;
+		
+        stackPush(row, col);
+		if( row == exitRow && col == exitCol ) {
+			printSolution( );
+			//make all board nodes not visited and start from another candidate node
+			for (int i=0;i<NN;i++)	
+                for(int j=0; j<NN; j++)
+                    hasVisited[i][j]=false;
+            row=candidRow.remove();		
+            col=candidCol.remove();	
+            checkFourDirections(maze, row, col);
+            return;
+		}
+		hasVisited[ row ][ col ] = true;
+		boolean keep = false;
+		while( dir >= 0 ) {
+			
+//			System.out.println( " Current row [ " + row + " ] col [ " + col + " ] dir [ " + dir + " ]");
+			if( dir == 0 ) {			// north -- up
+				if( ( row - 1 >= 0 ) && ( maze[ row - 1 ][ col ] == 1 ) && ( !hasVisited[ row - 1 ][ col ] ) ) {
+				System.out.println( " up " );
+					crow = row - 1;
+					ccol=col;
+					//enqueue the valid path
+					queueRow.offer(crow);		
+					queueCol.offer(ccol);	
+					keep=true;
+					pathInNode++;
+		
+				}
+			} else if( dir == 3 ) {		// west -- left
+				if( ( col - 1 >= 0 ) && ( maze[ row ][ col - 1 ] == 1 ) && ( !hasVisited[ row ][ col - 1 ] ) ) {
+				System.out.println( " left " );
+					ccol = col - 1;
+					crow=row;
+					queueRow.offer(crow);	
+					queueCol.offer(ccol);	
+					keep=true;
+					pathInNode++;
+		
+				}
+			} else if( dir == 1 ) {		// east -- right
+				if( ( col + 1 < NN ) && ( maze[ row ][ col + 1 ] == 1 ) && ( !hasVisited[ row ][ col + 1 ] ) ) {
+				System.out.println( " right " );
+					ccol = col + 1;
+					crow=row;
+					queueRow.offer(crow);		
+					queueCol.offer(ccol);	
+					keep=true;
+					pathInNode++;
+		
+				}
+			} else if( dir == 2 ) {		// south -- down
+				if( ( row + 1 < NN ) && ( maze[ row + 1 ][ col ] == 1 ) && ( !hasVisited[ row + 1 ][ col ] ) ) {
+				System.out.println( " down " );
+					crow = row + 1;
+					ccol=col;
+					queueRow.offer(crow);		
+					queueCol.offer(ccol);	
+					keep=true;
+					pathInNode++;
+		
+				}
+			} else {					// dir == 4?
+				System.out.println( " NONE " + row + " | " + col );
+				stackPop();
+				crow=queueRow.peek();
+				ccol=queueCol.peek();
+				keep=false;
+				checkFourDirections( maze, crow, ccol );
+			}
+			++dir;
+			//when more than one path, save in another queue
+			if (pathInNode>1){
+				for (int i=0; i<queueRow.size();i++){
+					int a = queueRow.peek();
+					int b = queueCol.peek();
+					candidRow.offer(queueRow.remove());
+					candidCol.offer(queueCol.remove());
+					queueRow.offer(a);
+					queueCol.offer(b);			
+			}
+		}
+			if ((keep)&&(dir==4)){ 
+				crow=queueRow.peek();
+				ccol=queueCol.peek();
+				keep=false;
+				checkFourDirections( maze, crow, ccol );
+			}
+		}
+		return;
+	}
+
+	public static void main(String[] args) {
+
+        final int maze[ ][ ] = { 
+        //	 0  1  2  3  4  5  6  7  8  9
+        	{1, 0, 0, 0, 1, 0, 0, 0, 0, 1}, // 0
+            {1, 1, 1, 0, 1, 1, 1, 1, 0, 0}, // 1
+            {0, 1, 0, 1, 1, 0, 0, 1, 0, 1}, // 2
+            {1, 1, 1, 1, 0, 1, 0, 1, 0, 0}, // 3
+            {0, 0, 1, 0, 1, 0, 1, 1, 1, 1}, // 4
+            {0, 1, 1, 0, 1, 1, 0, 0, 1, 0}, // 5
+            {0, 1, 0, 1, 0, 0, 1, 1, 1, 0}, // 6
+            {1, 1, 1, 0, 1, 0, 1, 1, 0, 0}, // 7
+            {0, 0, 1, 0, 0, 1, 1, 1, 0, 1}, // 8
+            {0, 0, 1, 1, 1, 1, 0, 1, 1, 1}, // 9
+        }; 
+		queueRow.offer(0); 
+		queueCol.offer(0); 
+		checkFourDirections( maze, 0, 0 );
+        System.out.println( "No paths have been found" );
+		return;
+	}
+			
+	public static void printSolution(  ) {
+
+		System.out.println( "\n\n ----------" );
+		System.out.println( " success " );
+		System.out.println( "----------\n\n" );
+		}
+	//since all paths printed needed, erase the System.exit(0);
+    
+}
+
+
+**/
